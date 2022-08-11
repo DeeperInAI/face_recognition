@@ -1,6 +1,7 @@
 import face_recognition
 import cv2
 import numpy as np
+import json
 
 # This is a demo of running face recognition on live video from your webcam. It's a little more complicated than the
 # other example, but it includes some basic performance tweaks to make things run a lot faster:
@@ -13,6 +14,12 @@ import numpy as np
 
 # Get a reference to webcam #0 (the default one)
 video_capture = cv2.VideoCapture(0)
+#stream_addr = 'rtsp://172.20.10.10:9554/webcam'
+#video_capture = cv2.VideoCapture(stream_addr)
+
+# Load a sample picture and learn how to recognize it.
+someone_image = face_recognition.load_image_file("someone.jpg")
+someone_face_encoding = face_recognition.face_encodings(someone_image)[0]
 
 # Load a sample picture and learn how to recognize it.
 obama_image = face_recognition.load_image_file("obama.jpg")
@@ -24,10 +31,12 @@ biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
 # Create arrays of known face encodings and their names
 known_face_encodings = [
+    someone_face_encoding,
     obama_face_encoding,
     biden_face_encoding
 ]
 known_face_names = [
+    "someone",
     "Barack Obama",
     "Joe Biden"
 ]
@@ -37,6 +46,8 @@ face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
+
+faceDetectedLogPath = r'/Users/chenxiaofeng/Documents/project/AI/aiLearn/someone.log'
 
 while True:
     # Grab a single frame of video
@@ -49,7 +60,7 @@ while True:
 
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
         rgb_small_frame = small_frame[:, :, ::-1]
-        
+
         # Find all the faces and face encodings in the current frame of video
         face_locations = face_recognition.face_locations(rgb_small_frame)
         face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
@@ -86,11 +97,18 @@ while True:
 
         # Draw a box around the face
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+        print("name1:" + name + ",left:" + str(left) + ",top:" + str(top) + ",right:" + str(right) + ",bottom:" + str(bottom))
 
         # Draw a label with a name below the face
         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
+        # Write faceDetected.log
+        data = {'name' : name, 'left' : str(left), 'top' : str(top), 'right' : str(right), 'bottom' : str(bottom)}
+        file = open(faceDetectedLogPath,'a+')
+        file.write(json.dumps(data) + '\n')
+        file.close()
 
     # Display the resulting image
     cv2.imshow('Video', frame)
